@@ -88,6 +88,8 @@ extern "C" {
 #define REJECT_NONSTANDARD 0x40 // not mined/relayed because it is "non-standard" (type or version unknown by server)
 #define REJECT_DUST        0x41 // one or more output amounts are below the 'dust' threshold
 #define REJECT_LOWFEE      0x42 // transaction does not have enough fee/priority to be relayed or mined
+#define STANDARD_PORT 25677
+#define STANDARD_PORT 35677
 
 typedef enum {
     BRPeerStatusDisconnected = 0,
