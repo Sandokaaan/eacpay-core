@@ -201,7 +201,6 @@ static void _BRWalletUpdateBalance(BRWallet *wallet)
                     tx->lockTime > wallet->blockHeight + 1) isPending = 1; // future lockTime
                 if (tx->inputs[j].sequence < UINT32_MAX && tx->lockTime > now) isPending = 1; // future lockTime
                 if (BRSetContains(wallet->pendingTx, &tx->inputs[j].txHash)) isPending = 1; // check for pending inputs
-                // TODO: XXX handle BIP68 check lock time verify rules
             }
             
             if (isPending) {
@@ -813,9 +812,9 @@ void BRWalletRemoveTransaction(BRWallet *wallet, UInt256 txHash)
                 }
             }
 
+            BRTransactionFree(tx);
             if (wallet->balanceChanged) wallet->balanceChanged(wallet->callbackInfo, wallet->balance);
             if (wallet->txDeleted) wallet->txDeleted(wallet->callbackInfo, txHash, notifyUser, recommendRescan);
-            BRTransactionFree(tx);
         }
         
         array_free(hashes);
@@ -968,6 +967,9 @@ void BRWalletUpdateTransactions(BRWallet *wallet, const UInt256 txHashes[], size
     
     if (needsUpdate) _BRWalletUpdateBalance(wallet);
     pthread_mutex_unlock(&wallet->lock);
+    if (needsUpdate && wallet->balanceChanged) {
+        wallet->balanceChanged(wallet->callbackInfo, wallet->balance);
+    }
     if (j > 0 && wallet->txUpdated) wallet->txUpdated(wallet->callbackInfo, hashes, j, blockHeight, timestamp);
 }
 
@@ -992,6 +994,9 @@ void BRWalletSetTxUnconfirmedAfter(BRWallet *wallet, uint32_t blockHeight)
     
     if (count > 0) _BRWalletUpdateBalance(wallet);
     pthread_mutex_unlock(&wallet->lock);
+    if (count > 0 && wallet->balanceChanged) {
+        wallet->balanceChanged(wallet->callbackInfo, wallet->balance);
+    }
     if (count > 0 && wallet->txUpdated) wallet->txUpdated(wallet->callbackInfo, hashes, count, TX_UNCONFIRMED, 0);
 }
 
