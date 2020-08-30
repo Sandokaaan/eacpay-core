@@ -47,7 +47,7 @@
 #define PEER_FLAG_SYNCED      0x01
 #define PEER_FLAG_NEEDSUPDATE 0x02
 
-#if LITECOIN_TESTNET
+#if EARTHCOIN_TESTNET
 
 static const struct { uint32_t height; const char *hash; uint32_t timestamp; uint32_t target; } checkpoint_array[] = {
     { 0, "14b1da80b3d734d36a4a2be97ed2c9d49e79c47213d5bcc15b475a1115d28918", 1386746169, 0x1e0ffff0 }
