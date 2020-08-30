@@ -93,6 +93,8 @@ typedef struct {
     uint32_t lockTime;
     uint32_t blockHeight;
     uint32_t timestamp; // time interval since unix epoch
+    size_t commentLength;
+    char * comment;
 } BRTransaction;
 
 // returns a newly allocated empty transaction that must be freed by calling BRTransactionFree()
@@ -148,6 +150,9 @@ inline static int BRTransactionEq(const void *tx, const void *otherTx)
 
 // frees memory allocated for tx
 void BRTransactionFree(BRTransaction *tx);
+
+// tx-message support - set a transaction message
+void BRTransactionSetMessage(BRTransaction * tx, char * comment, size_t comLen);
 
 #ifdef __cplusplus
 }
