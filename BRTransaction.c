@@ -319,11 +319,11 @@ static size_t _BRTransactionData(const BRTransaction *tx, uint8_t *data, size_t 
     // support for transaction messages
     // serialize tx_comment only for whole transaction !
     if (index == SIZE_MAX && tx->version == TX_VERSION_MSG) {
-	off += BRVarIntSet((data ? &data[off] : NULL), (off <= dataLen ? dataLen - off : 0), tx->commentLength);
-	if ((tx->comment != NULL) &&  (off + tx->commentLength) <= dataLen) {
-	    memcpy(&data[off], tx->comment, tx->commentLength);
-            off += tx->commentLength;
+        off += BRVarIntSet((data ? &data[off] : NULL), (off <= dataLen ? dataLen - off : 0), tx->commentLength);
+        if ((tx->comment != NULL) &&  (off + tx->commentLength) <= dataLen) {
+            memcpy(&data[off], tx->comment, tx->commentLength);
         }
+        off += tx->commentLength;
     }
     
     if (index != SIZE_MAX) {
