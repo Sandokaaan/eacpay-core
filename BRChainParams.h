@@ -129,8 +129,7 @@ static const BRChainParams BRMainNetParams = {
 
 static const BRChainParams BRTestNetParams = {
     BRTestNetDNSSeeds,
-    //25677,      // standardPort
-    55578,
+    25677,      // standardPort
     0xf1b6c2fd, // magicNumber
     0,          // services
     BRTestNetVerifyDifficulty,
