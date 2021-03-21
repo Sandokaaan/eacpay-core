@@ -33,7 +33,7 @@
 extern "C" {
 #endif
 
-#define BLOCK_DIFFICULTY_INTERVAL 500 // number of blocks between difficulty target adjustments
+#define BLOCK_DIFFICULTY_INTERVAL 1 // number of blocks between difficulty target adjustments
 #define BLOCK_UNKNOWN_HEIGHT      INT32_MAX
 #define BLOCK_MAX_TIME_DRIFT      (2*60*60) // the furthest in the future a block is allowed to be timestamped
 
@@ -52,10 +52,15 @@ typedef struct {
     uint8_t *flags;
     size_t flagsLen;
     uint32_t height;
+    uint8_t *auxpowData;
+    size_t auxpowLen;
 } BRMerkleBlock;
 
 #define BR_MERKLE_BLOCK_NONE\
     ((BRMerkleBlock) { UINT256_ZERO, 0, UINT256_ZERO, UINT256_ZERO, 0, 0, 0, 0, NULL, 0, NULL, 0, 0 })
+
+// return size of AUX-POW data to be deserialized
+size_t calcAuxpowSize(const uint8_t *buf, size_t off);
 
 // returns a newly allocated merkle block struct that must be freed by calling BRMerkleBlockFree()
 BRMerkleBlock *BRMerkleBlockNew(void);
@@ -103,6 +108,8 @@ inline static int BRMerkleBlockEq(const void *block, const void *otherBlock)
     return (block == otherBlock ||
             UInt256Eq(((const BRMerkleBlock *)block)->blockHash, ((const BRMerkleBlock *)otherBlock)->blockHash));
 }
+
+// true
 
 // frees memory allocated for block
 void BRMerkleBlockFree(BRMerkleBlock *block);

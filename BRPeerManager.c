@@ -740,6 +740,18 @@ static void _BRPeerManagerFindPeers(BRPeerManager *manager)
     }
 }
 
+// true if currently connected to at least one peer
+int BRPeerManagerIsConnected(BRPeerManager *manager)
+{
+    int isConnected;
+
+    assert(manager != NULL);
+    pthread_mutex_lock(&manager->lock);
+    isConnected = manager->isConnected;
+    pthread_mutex_unlock(&manager->lock);
+    return isConnected;
+}
+
 static void _peerConnected(void *info)
 {
     BRPeer *peer = ((BRPeerCallbackInfo *)info)->peer;
@@ -1215,12 +1227,8 @@ static void _peerRelayedBlock(void *info, BRMerkleBlock *block)
         }
     }
 
-    // ignore block headers that are newer than one week before earliestKeyTime (it's a header if it has 0 totalTx)
-    if (block->totalTx == 0 && block->timestamp + 7*24*60*60 > manager->earliestKeyTime + 2*60*60) {
-        BRMerkleBlockFree(block);
-        block = NULL;
-    }
-    else if (manager->bloomFilter == NULL) { // ingore potentially incomplete blocks when a filter update is pending
+    // ingore potentially incomplete blocks when a filter update is pending
+    if (manager->bloomFilter == NULL) {
         BRMerkleBlockFree(block);
         block = NULL;
 

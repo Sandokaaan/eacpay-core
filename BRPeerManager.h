@@ -75,6 +75,9 @@ BRPeerStatus BRPeerManagerConnectStatus(BRPeerManager *manager);
 // returns the standard port used for BRChainParams
 uint16_t BRPeerManagerStandardPort(BRPeerManager *manager);
 
+// true if currently connected to at least one peer
+int BRPeerManagerIsConnected(BRPeerManager *manager);
+
 // connect to bitcoin peer-to-peer network (also call this whenever networkIsReachable() status changes)
 void BRPeerManagerConnect(BRPeerManager *manager);
 
