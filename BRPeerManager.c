@@ -1227,8 +1227,13 @@ static void _peerRelayedBlock(void *info, BRMerkleBlock *block)
         }
     }
 
+    // ignore block headers that are newer than one week before earliestKeyTime (it's a header if it has 0 totalTx)
+    if (block->totalTx == 0 && block->timestamp + 7*24*60*60 > manager->earliestKeyTime + 2*60*60) {
+        BRMerkleBlockFree(block);
+        block = NULL;
+    }
     // ingore potentially incomplete blocks when a filter update is pending
-    if (manager->bloomFilter == NULL) {
+    else if (manager->bloomFilter == NULL) {
         BRMerkleBlockFree(block);
         block = NULL;
 
@@ -1298,7 +1303,7 @@ static void _peerRelayedBlock(void *info, BRMerkleBlock *block)
         b = manager->lastBlock;
         while (b && b->height > block->height) b = BRSetGet(manager->blocks, &b->prevBlock); // is block in main chain?
 
-        if (BRMerkleBlockEq(b, block)) { // if it's not on a fork, set block heights for its transactions
+        if (b && BRMerkleBlockEq(b, block)) { // if it's not on a fork, set block heights for its transactions
             if (txCount > 0) _BRPeerManagerUpdateTx(manager, txHashes, txCount, block->height, txTime);
             if (block->height == manager->lastBlock->height) manager->lastBlock = block;
         }

@@ -439,6 +439,7 @@ static int _BRPeerAcceptHeadersMessage(BRPeer *peer, const uint8_t *msg, size_t 
     BRPeerContext *ctx = (BRPeerContext *)peer;
     size_t off = 0, count = (size_t)BRVarInt(msg, msgLen, &off);
     int r = 1;
+    int seekBoundary = 1;
 
     if (off == 0 || off + 81*count > msgLen) {
         peer_log(peer, "malformed headers message, length is %zu, should be %zu for %zu header(s)", msgLen,
@@ -458,14 +459,23 @@ static int _BRPeerAcceptHeadersMessage(BRPeer *peer, const uint8_t *msg, size_t 
             size_t last = 0;
             time_t now = time(NULL);
             UInt256 locators[2];
+            UInt256 tmpHash;
 
             for (size_t i = 0; r && i < count; i++) {
-                if (i==0)
-                    BRSHA256_2(&locators[1], &msg[off], 80);          // hash of the first block in the package of <=2000 headers
-                else if (i==(count-1))
-                    BRSHA256_2(&locators[0], &msg[off], 80);    // hash of the last block in the package of <=2000 headers
                 BRMerkleBlock *block = BRMerkleBlockParse(&msg[off], 81);
+                if (!block) {
+                    return 0;   // block parse failed
+                }
+                BRSHA256_2(&tmpHash, &msg[off], 80);
                 off += (81 + block->auxpowLen);
+                if (i==0) {
+                    locators[0] = tmpHash;
+                    locators[1] = tmpHash;
+                }
+                if (seekBoundary && block->timestamp > 0 && block->timestamp + 7*24*60*60 + BLOCK_MAX_TIME_DRIFT < ctx->earliestKeyTime)
+                    locators[0] = tmpHash;
+                else
+                    seekBoundary = 0;
                 if (!BRMerkleBlockIsValid(block, (uint32_t) now)) {
                     peer_log(peer, "invalid block header: %s", u256hex(block->blockHash));
                     BRMerkleBlockFree(block);
@@ -474,8 +484,10 @@ static int _BRPeerAcceptHeadersMessage(BRPeer *peer, const uint8_t *msg, size_t 
                     ctx->relayedBlock(ctx->info, block);
                 } else BRMerkleBlockFree(block);
             }
-
-            BRPeerSendGetheaders(peer, locators, 2, UINT256_ZERO);
+            if (timestamp > 0 && timestamp + 7*24*60*60 + BLOCK_MAX_TIME_DRIFT >= ctx->earliestKeyTime)
+                BRPeerSendGetblocks(peer, locators, 2, UINT256_ZERO);
+            else
+                BRPeerSendGetheaders(peer, locators, 2, UINT256_ZERO);
         }
         else {
             peer_log(peer, "non-standard headers message, %zu is fewer header(s) than expected", count);
